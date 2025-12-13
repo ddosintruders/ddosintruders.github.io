@@ -207,6 +207,11 @@ input, select, textarea {
 			}
 			}
 
+			#loader.fade-out {
+				opacity: 0;
+				visibility: hidden;
+			}
+
 
 		/* Scroll Progress Bar */
 		#progress-bar {
