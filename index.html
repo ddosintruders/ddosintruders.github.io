@@ -46,20 +46,20 @@
 	</head>
 	<body class="is-preload">
 			<!-- Loading Animation -->
-				<div id="loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000000; z-index: 99999; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s ease, visibility 0.5s ease;">
-					<div class="loader-wrapper">
-						<div class="loader"></div>
-						<span class="loader-letter">L</span>
-						<span class="loader-letter">o</span>
-						<span class="loader-letter">a</span>
-						<span class="loader-letter">d</span>
-						<span class="loader-letter">i</span>
-						<span class="loader-letter">n</span>
-						<span class="loader-letter">g</span>
-					</div>
+			 <div id="loader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111010; z-index: 99999; display: flex; justify-content: center; align-items: center; transition: opacity 0.5s ease, visibility 0.5s ease;">
+				<div class="loader-wrapper">
+					<div class="loader"></div>
+					<span class="loader-letter">L</span>
+					<span class="loader-letter">o</span>
+					<span class="loader-letter">a</span>
+					<span class="loader-letter">d</span>
+					<span class="loader-letter">i</span>
+					<span class="loader-letter">n</span>
+					<span class="loader-letter">g</span>
 				</div>
+			</div>
 
-			<div id="progress-bar"></div>
+		<div id="progress-bar"></div>
 
 		<!-- Header -->
 			<header id="header">
@@ -129,7 +129,7 @@
 				<!-- Two -->
 					<section id="two">
 						<h2>My Work</h2>
-     					<p> <em>Images may take a moment to load, even with optimized images. If it fails, reload the page and try again. </em> </p>
+     <p> <em>Images may take a moment to load, even with optimized images. If it fails,reload the page and try again. </em> </p>
 						<div class="row">
 							<article class="col-6 col-12-xsmall work-item">
 								<a href="images/fulls/Silica Designs Logo.png" class="image fit thumb"> <img src="images/thumbs/Silica Designs Logo.png" alt="Silica Designs and Systems Project"/> </a>
@@ -209,10 +209,8 @@
 									<ul>
 										<li>Graphic Design</li>
 										<li>Video Editing | DaVinci Resolve & CapCut</li>
-										<li>Brand Design & Identity | Affinity Studio by Canva</li>
+										<li>Brand Design & Identity | Affinity Suite by Serif Designs</li>
 										<li>360° Video Production | Insta360 X5</li>
-										<li>Livestreaming Setup & Coverage</li>
-										<li>Basic Animation & Motion Graphics</li>
 									</ul>
 								</div>
 								<div class="col-6 col-12-xsmall">
@@ -226,31 +224,11 @@
 										<li>WordPress Site Designer</li>
 									</ul>
 								</div>
-				</section>
-
-				<section id="four">					
-					<h3>Licenses & Certifications</h3>
-					<div class="row">
-						<div class="col-6 col-12-xsmall">
-							<h5>IT & Technology</h5>
-							<ul>
-								<li>Cisco™ Networking Basics</li>
-								<li>Cisco™ Cybersecurity Basics</li>
-								<li>Google™ IT Support Certificate</li>
-							</ul>
-						</div>
-						<div class="col-6 col-12-xsmall">
-							<h5>Media & Creatives</h5>
-							<ul>
-								<li>Canva Design Basics Certificate</li>
-								<li>Affinity Studio Basics Certificate</li>
-							</ul>
-						</div>
-					</div>
+							</div>
 				</section>
 
 				<!-- Four -->
-					<section id="five">
+					<section id="four">
 						<h2>Get In Touch</h2>
 						<p>Feel free to reach out for collaborations, inquiries, or just to say hello!</p>
 						<div class="row">
@@ -268,21 +246,8 @@
 										</div>
 										<div class="col-12">
 											<ul class="actions">
-												<li>
-													<button type="submit" class="animated-button">
-														<svg class="arr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-															<path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-														</svg>
-														<span class="text">Send Message</span>
-														<span class="circle"></span>
-														<svg class="arr-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-															<path d="M16.1716 10.9999L10.8076 5.63589L12.2218 4.22168L20 11.9999L12.2218 19.778L10.8076 18.3638L16.1716 12.9999H4V10.9999H16.1716Z"></path>
-														</svg>
-													</button>
-												</li>
-												<li>
-													<li><input type="reset" value="Reset" style="min-width: auto; width: auto; display: inline-block;" /></li>
-												</li>
+												<li><input type="submit" value="Send Message" class="primary" /></li>
+												<li><input type="reset" value="Reset" /></li>
 											</ul>
 										</div>
 									</div>
@@ -384,7 +349,7 @@
 
 					$(window).on('load', function() {
 						var loadTime = Date.now() - loadStart;
-						var minDisplayTime = 2000;
+						var minDisplayTime = 1500;
 						var remainingTime = Math.max(0, minDisplayTime - loadTime);
 						
 						setTimeout(function() {
