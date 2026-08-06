@@ -1,0 +1,6 @@
+order: 3
+name: QA Reporting Framework
+kind: Audit reporting system
+problem: Quality and fraud-review decisions depended on signals scattered across separate systems, with no single artifact a reviewer could act on.
+build: A framework combining session replay, activity logging and network capture into one exportable audit report.
+effect: Supports quality and fraud-review decisions from a single, self-contained record.

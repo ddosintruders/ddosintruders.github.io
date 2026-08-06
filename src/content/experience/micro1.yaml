@@ -1,0 +1,24 @@
+order: 1
+company: micro1
+companyNote: Human data engine for frontier AI labs
+location: Remote — Palo Alto, CA
+current: true
+headline: Annotator to running the pipeline, in a month.
+roles:
+  - title: Human Data Expert
+    period: Feb 2026 — Present
+    current: true
+    points:
+      - Manage a team of generalists and Human Data Managers supporting a large-scale robotics training data pipeline, owning quality review, fraud detection, onboarding and payments operations end to end.
+      - Designed and built FrameCapture, an internal desktop audit tool with a multi-threaded browser-automation architecture, to verify submission integrity across the annotation pipeline.
+      - Built UIAR, a UI augmentation layer adding task-tracking identifiers to internal project boards, improving pipeline visibility for reviewers and leads.
+      - Designed a QA reporting framework combining session replay, activity logging and network capture into a single exportable audit report supporting quality and fraud-review decisions.
+      - Built a biometric fraud-detection system using computer-vision tracking and anomaly-detection modelling to flag suspicious submission behaviour at scale.
+      - Built an automated pipeline-activity reporting system with quality scoring and refreshing visualizations to track team and pipeline performance.
+      - Partnered directly with a Strategic Project Lead on an AI-Lab-facing engagement, contributing to the design, build and optimization of the labeling tools supporting the project.
+  - title: AI Expert Generalist
+    period: Jan 2026 — Feb 2026
+    current: false
+    points:
+      - Delivered AI training data annotations with a sustained quality score above 95%, maintaining strict adherence to evolving project guidelines and workflows.
+      - Coordinated with peer annotators to share workflow improvements, contributing to team-wide submission quality and approval rates.

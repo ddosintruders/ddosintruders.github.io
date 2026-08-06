@@ -1,0 +1,101 @@
+---
+import { sections } from '@/config/site';
+---
+
+<!-- Top scroll progress hairline -->
+<div
+  class="fixed inset-x-0 top-0 z-[9996] h-0.5 bg-transparent"
+  aria-hidden="true"
+>
+  <div class="h-full w-0 origin-left bg-accent" data-scroll-progress></div>
+</div>
+
+<!--
+  Right-edge section index.
+  This is a genuine <nav> with real anchors, not a decorative flourish: it is
+  keyboard reachable and screen-reader labelled. Hidden below lg where it would
+  crowd the content.
+-->
+<nav
+  aria-label="Section navigation"
+  class="fixed top-1/2 right-4 z-[9995] hidden -translate-y-1/2 lg:block"
+  data-section-rail
+>
+  <ul class="flex flex-col items-end gap-3">
+    {
+      sections.map((section) => (
+        <li>
+          {/*
+            The label is hover-only. Showing it for the active section too meant
+            it sat permanently over the right edge of full-width cards at
+            1280px — the shell is 88rem wide, so there is no viewport where a
+            fixed rail plus a label clears the content column. Active state is
+            carried by the tick's width and colour instead, which stays inside
+            the gutter at every breakpoint.
+          */}
+          <a
+            href={`#${section.id}`}
+            data-rail-link={section.id}
+            class="group flex items-center gap-2.5 py-1 font-mono text-[0.625rem] tracking-[0.14em] text-faint uppercase transition-colors duration-300 hover:text-text [&.is-active]:text-accent"
+          >
+            <span class="rounded bg-bg/80 px-1.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+              {section.label}
+            </span>
+            <span
+              class="h-px w-4 bg-current transition-all duration-300 group-hover:w-7 group-[.is-active]:w-7"
+              aria-hidden="true"
+            />
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>
+
+<script>
+  // Scroll progress bar. Uses scrollHeight rather than a cached value so it
+  // stays correct after images load and pinned sections change page height.
+  const bar = document.querySelector<HTMLElement>('[data-scroll-progress]');
+
+  const updateProgress = () => {
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = max > 0 ? (window.scrollY / max) * 100 : 0;
+    if (bar) bar.style.width = `${Math.min(100, Math.max(0, pct))}%`;
+  };
+
+  window.addEventListener('scroll', updateProgress, { passive: true });
+  window.addEventListener('resize', updateProgress, { passive: true });
+  updateProgress();
+
+  // Scroll-spy for the rail. IntersectionObserver rather than scroll maths:
+  // it survives pinned sections, which break naive offsetTop comparisons.
+  const links = new Map<string, HTMLElement>();
+  document.querySelectorAll<HTMLElement>('[data-rail-link]').forEach((link) => {
+    const id = link.getAttribute('data-rail-link');
+    if (id) links.set(id, link);
+  });
+
+  const setActive = (id: string) => {
+    links.forEach((link, key) => {
+      link.classList.toggle('is-active', key === id);
+      if (key === id) link.setAttribute('aria-current', 'true');
+      else link.removeAttribute('aria-current');
+    });
+  };
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      // Pick the entry closest to the middle of the viewport.
+      const visible = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+      if (visible[0]) setActive(visible[0].target.id);
+    },
+    { rootMargin: '-45% 0px -45% 0px', threshold: [0, 0.25, 0.5, 1] },
+  );
+
+  links.forEach((_, id) => {
+    const section = document.getElementById(id);
+    if (section) observer.observe(section);
+  });
+</script>

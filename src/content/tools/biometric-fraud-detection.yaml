@@ -1,0 +1,6 @@
+order: 4
+name: Biometric fraud detection
+kind: Computer vision + anomaly detection
+problem: Suspicious submission behaviour needed catching at a scale and consistency no human review rota can sustain.
+build: A detection system pairing computer-vision tracking with anomaly-detection modelling over submission behaviour.
+effect: Flags suspicious submission behaviour at scale.

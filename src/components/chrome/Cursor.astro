@@ -1,0 +1,127 @@
+---
+/**
+ * Custom cursor: an exact-tracking dot plus a lerped ring that grows and
+ * optionally labels itself over interactive targets.
+ *
+ * Opt in from any element with:
+ *   data-cursor-label="Open"  → ring grows and shows text
+ *   data-cursor-magnetic      → ring snaps to the element's centre
+ *   (plain a/button)          → ring grows
+ *
+ * Accessibility: aria-hidden and pointer-events:none, so it is invisible to
+ * assistive tech and can never intercept a click or trap focus. The markup is
+ * inert until the script confirms a fine pointer and allowed motion — the same
+ * two conditions the CSS uses to hide the native cursor, so there is no state
+ * where a visitor ends up with neither.
+ */
+---
+
+<div
+  id="cursor"
+  aria-hidden="true"
+  class="pointer-events-none fixed inset-0 z-[9999] hidden opacity-0 mix-blend-difference transition-opacity duration-300"
+>
+  <div
+    class="absolute top-0 left-0 h-1.5 w-1.5 rounded-full bg-white"
+    data-cursor-dot
+  >
+  </div>
+  <div
+    class="absolute top-0 left-0 flex h-9 w-9 items-center justify-center rounded-full border border-white/70"
+    data-cursor-ring
+    style="transition: width 350ms var(--ease-out-expo), height 350ms var(--ease-out-expo);"
+  >
+    <span
+      class="font-mono text-[0.625rem] font-medium tracking-[0.14em] whitespace-nowrap text-white uppercase"
+      data-cursor-text></span>
+  </div>
+</div>
+
+<script>
+  import { hasFinePointer, prefersReducedMotion } from '@/lib/reduced-motion';
+
+  const root = document.getElementById('cursor');
+
+  if (root && hasFinePointer() && !prefersReducedMotion()) {
+    const dot = root.querySelector<HTMLElement>('[data-cursor-dot]')!;
+    const ring = root.querySelector<HTMLElement>('[data-cursor-ring]')!;
+    const text = root.querySelector<HTMLElement>('[data-cursor-text]')!;
+
+    root.classList.remove('hidden');
+    document.documentElement.classList.add('has-custom-cursor');
+
+    const target = { x: innerWidth / 2, y: innerHeight / 2 };
+    const current = { ...target };
+    let magnet: { x: number; y: number } | null = null;
+    let visible = false;
+
+    const show = () => {
+      if (visible) return;
+      visible = true;
+      root.style.opacity = '1';
+    };
+
+    addEventListener(
+      'pointermove',
+      (event) => {
+        target.x = event.clientX;
+        target.y = event.clientY;
+        show();
+      },
+      { passive: true },
+    );
+
+    addEventListener(
+      'pointerover',
+      (event) => {
+        const el = (event.target as Element | null)?.closest<HTMLElement>(
+          '[data-cursor-label], [data-cursor-magnetic], a, button, summary',
+        );
+
+        if (!el) {
+          magnet = null;
+          text.textContent = '';
+          ring.style.width = '2.25rem';
+          ring.style.height = '2.25rem';
+          return;
+        }
+
+        if (el.hasAttribute('data-cursor-magnetic')) {
+          const rect = el.getBoundingClientRect();
+          magnet = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+        } else {
+          magnet = null;
+        }
+
+        const label = el.getAttribute('data-cursor-label') ?? '';
+        text.textContent = label;
+        const size = label ? '4.5rem' : '3.25rem';
+        ring.style.width = size;
+        ring.style.height = size;
+      },
+      { passive: true },
+    );
+
+    document.addEventListener('pointerleave', () => {
+      visible = false;
+      root.style.opacity = '0';
+    });
+
+    const render = () => {
+      const gx = magnet ? magnet.x : target.x;
+      const gy = magnet ? magnet.y : target.y;
+
+      // Critically damped follow — tight enough to feel attached, loose enough
+      // to read as a separate object trailing the pointer.
+      current.x += (gx - current.x) * 0.18;
+      current.y += (gy - current.y) * 0.18;
+
+      dot.style.transform = `translate3d(${target.x}px, ${target.y}px, 0) translate(-50%, -50%)`;
+      ring.style.transform = `translate3d(${current.x}px, ${current.y}px, 0) translate(-50%, -50%)`;
+
+      requestAnimationFrame(render);
+    };
+
+    requestAnimationFrame(render);
+  }
+</script>

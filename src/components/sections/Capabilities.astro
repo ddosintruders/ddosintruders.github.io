@@ -1,0 +1,101 @@
+---
+import { capabilities } from '@/data/capabilities';
+import SectionHeader from '@/components/ui/SectionHeader.astro';
+---
+
+<section id="capabilities" class="shell scroll-mt-24 py-24 md:py-32">
+  <SectionHeader
+    index="04"
+    label="Capabilities"
+    title="Three sides of the same job."
+    lede="Running a data pipeline means owning the operations, the people and the tools. These are the parts I actually do, not a wishlist."
+  />
+
+  <!--
+    Sticky index rather than a pinned horizontal scroller.
+    Three groups of 3–6 items do not fill three full-width panels; horizontal
+    pinning here would stretch thin content across a lot of scroll and read as
+    padding. This keeps the same "locked frame" feel with none of the pin
+    fragility, and it degrades to a plain stack on small screens for free.
+  -->
+  <div class="mt-16 grid gap-12 md:mt-20 lg:grid-cols-12 lg:gap-8">
+    <div class="lg:col-span-3">
+      <ol class="hidden lg:sticky lg:top-28 lg:block lg:space-y-3">
+        {
+          capabilities.map((group) => (
+            <li>
+              <a
+                href={`#cap-${group.index}`}
+                data-cap-link={group.index}
+                class="group flex items-baseline gap-3 font-mono text-[0.6875rem] tracking-[0.14em] text-faint uppercase transition-colors duration-300 hover:text-text"
+              >
+                <span>{group.index}</span>
+                <span class="h-px w-0 bg-accent transition-all duration-300 group-[.is-active]:w-5" />
+                <span class="group-[.is-active]:text-accent">{group.title}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+
+    <div class="space-y-16 lg:col-span-8 lg:col-start-5 lg:space-y-20">
+      {
+        capabilities.map((group) => (
+          <div id={`cap-${group.index}`} data-cap-group={group.index} class="scroll-mt-28">
+            <div class="flex items-baseline gap-4 border-b border-hairline pb-5">
+              <span class="font-mono text-[0.6875rem] tracking-[0.14em] text-faint">
+                {group.index}
+              </span>
+              <h3 class="font-display text-d3 text-text">{group.title}</h3>
+            </div>
+
+            <p class="mt-5 text-sm text-muted" data-reveal-fade>
+              {group.note}
+            </p>
+
+            <ul class="mt-8 flex flex-wrap gap-2.5">
+              {group.items.map((item) => (
+                <li
+                  data-reveal-fade
+                  class="rounded-full border border-hairline bg-surface px-4 py-2 text-sm text-text transition-colors duration-300 hover:border-accent/40 hover:bg-accent-dim hover:text-accent"
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<script>
+  // Highlights the sticky index against whichever group is centred.
+  const links = new Map<string, HTMLElement>();
+  document.querySelectorAll<HTMLElement>('[data-cap-link]').forEach((el) => {
+    const key = el.getAttribute('data-cap-link');
+    if (key) links.set(key, el);
+  });
+
+  const groups = document.querySelectorAll<HTMLElement>('[data-cap-group]');
+
+  if (links.size && groups.length) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+        const key = visible[0]?.target.getAttribute('data-cap-group');
+        if (!key) return;
+
+        links.forEach((link, id) => link.classList.toggle('is-active', id === key));
+      },
+      { rootMargin: '-40% 0px -40% 0px', threshold: [0, 0.3, 0.6, 1] },
+    );
+
+    groups.forEach((group) => observer.observe(group));
+  }
+</script>

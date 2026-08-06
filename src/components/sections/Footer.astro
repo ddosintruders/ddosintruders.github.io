@@ -1,0 +1,40 @@
+---
+import { site } from '@/config/site';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="border-t border-hairline">
+  <div
+    class="shell flex flex-col gap-6 py-10 md:flex-row md:items-center md:justify-between"
+  >
+    <p class="font-mono text-[0.6875rem] tracking-[0.12em] text-faint uppercase">
+      © {year} {site.name}
+    </p>
+
+    <ul class="flex flex-wrap items-center gap-6">
+      {
+        site.socials.map((social) => (
+          <li>
+            <a
+              href={social.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="font-mono text-[0.6875rem] tracking-[0.12em] text-faint uppercase transition-colors duration-300 hover:text-accent"
+            >
+              {social.label}
+            </a>
+          </li>
+        ))
+      }
+      <li>
+        <a
+          href={`mailto:${site.email}`}
+          class="font-mono text-[0.6875rem] tracking-[0.12em] text-faint uppercase transition-colors duration-300 hover:text-accent"
+        >
+          Email
+        </a>
+      </li>
+    </ul>
+  </div>
+</footer>

@@ -1,0 +1,14 @@
+order: 2
+company: human depth
+companyNote: Pre-launch platform for the human layer of AI
+location: Remote — London, UK
+current: true
+headline: Founding engineer on a platform for the people behind the models.
+roles:
+  - title: Founding Software Engineer
+    period: Jul 2026 — Present
+    current: true
+    points:
+      - Building a professional community platform for AI training, annotation and operations professionals, working directly alongside the COO to define the platform's technical foundation.
+      - Co-designing a role-progression system to help human-in-the-loop professionals map career paths across the industry, and a multi-grader certification framework for verifying skill quality.
+      - Contributing to competitive positioning strategy, differentiating the platform from traditional HR and referral models around assisted candidate positioning and tailoring.

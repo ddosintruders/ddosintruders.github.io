@@ -1,0 +1,482 @@
+---
+import { Image } from 'astro:assets';
+import { archive } from '@/data/archive';
+import SectionHeader from '@/components/ui/SectionHeader.astro';
+---
+
+<section id="archive" class="shell scroll-mt-24 py-24 md:py-32">
+  <SectionHeader
+    index="07"
+    label="Archive"
+    title="Design work, kept for the record."
+    lede="Self-directed brand exercises for fictional companies, plus studio and client work from 2024–25. It is not what I do now, and it is labelled as what it is."
+  />
+
+  <!--
+    Collapsed by default: a native <details>, so it works with zero JS, is
+    keyboard operable, and screen readers announce the expanded state correctly.
+    The archive images also stay lazy until opened.
+  -->
+  <details class="group mt-12 md:mt-16" data-archive>
+    <summary
+      data-cursor-label="Open"
+      class="flex cursor-pointer list-none items-center justify-between gap-6 border-y border-hairline py-6 transition-colors duration-300 hover:border-hairline-strong"
+    >
+      <span class="font-display text-xl text-text">
+        {archive.length} projects · {archive.reduce((n, p) => n + p.images.length, 0)} pieces
+      </span>
+
+      <span class="flex items-center gap-3">
+        <span
+          class="font-mono text-[0.6875rem] tracking-[0.12em] text-faint uppercase group-open:hidden"
+        >
+          View archive
+        </span>
+        <span
+          class="hidden font-mono text-[0.6875rem] tracking-[0.12em] text-faint uppercase group-open:inline"
+        >
+          Close
+        </span>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          aria-hidden="true"
+          class="shrink-0 text-accent transition-transform duration-300 group-open:rotate-45"
+        >
+          <path
+            d="M8 3v10M3 8h10"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"></path>
+        </svg>
+      </span>
+    </summary>
+
+    <div class="mt-10 grid gap-5 md:grid-cols-2">
+      {
+        archive.map((project) => (
+          <article
+            data-scrub
+            data-tilt="4"
+            class="group/card overflow-hidden rounded-xl border border-hairline bg-surface transition-colors duration-500 hover:border-hairline-strong"
+          >
+            {/*
+              A real <button>, not a click handler on the article: it is the
+              keyboard and screen-reader entry point to the gallery. The
+              hover-scrub still runs on the parent, so pointer users keep
+              previewing the set by moving across the card.
+            */}
+            <button
+              type="button"
+              data-open-archive={project.slug}
+              aria-haspopup="dialog"
+              data-cursor-label="Expand"
+              class="relative block aspect-[4/3] w-full cursor-pointer overflow-hidden bg-surface-2 text-left"
+            >
+              {project.images.map((image, index) => (
+                <Image
+                  src={image}
+                  alt={
+                    index === 0
+                      ? `${project.title} — ${project.kind}`
+                      : `${project.title}, image ${index + 1}`
+                  }
+                  widths={[480, 800, 1200]}
+                  sizes="(min-width: 768px) 45vw, 92vw"
+                  loading="lazy"
+                  decoding="async"
+                  data-scrub-frame
+                  class="absolute inset-0 h-full w-full object-contain p-8 transition-opacity duration-200"
+                  style={`opacity: ${index === 0 ? 1 : 0}`}
+                />
+              ))}
+
+              <span
+                data-scrub-counter
+                class="absolute right-3 bottom-3 rounded-full bg-bg/80 px-2.5 py-1 font-mono text-[0.625rem] tracking-wider text-muted opacity-0 transition-opacity duration-300 group-hover/card:opacity-100"
+              >
+                1 / {project.images.length}
+              </span>
+
+              <span class="absolute top-3 right-3 rounded-full bg-bg/80 px-2.5 py-1 font-mono text-[0.625rem] tracking-[0.1em] text-accent uppercase opacity-0 transition-opacity duration-300 group-hover/card:opacity-100">
+                Expand
+              </span>
+            </button>
+
+            <div class="border-t border-hairline p-6">
+              <div class="flex items-baseline justify-between gap-4">
+                <h3 class="font-display text-lg text-text">{project.title}</h3>
+                <span class="shrink-0 font-mono text-[0.625rem] tracking-[0.12em] text-faint">
+                  {project.year}
+                </span>
+              </div>
+              <p class="mt-1.5 font-mono text-[0.625rem] tracking-[0.12em] text-accent uppercase">
+                {project.kind}
+              </p>
+              <p class="mt-4 text-sm leading-relaxed text-muted">{project.blurb}</p>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </details>
+
+  {/*
+    Gallery lightbox — one <dialog> per project, rendered as a sibling of the
+    <details> rather than inside it: a dialog in a collapsed <details> sits in a
+    display:none subtree, and showModal() throws there.
+
+    One piece at a time rather than a scrolling column. These are logos, posters
+    and mockups — things you look *at*. Giving each the full stage and stepping
+    between them beats scrolling past a stack of cramped thumbnails.
+  */}
+  {
+    archive.map((project) => (
+      <dialog
+        id={`archive-${project.slug}`}
+        data-gallery
+        aria-labelledby={`archive-${project.slug}-title`}
+        class="archive-dialog"
+      >
+        <div class="flex h-full flex-col">
+          <header class="flex items-start justify-between gap-6 border-b border-hairline px-5 py-4 md:px-7 md:py-5">
+            <div class="min-w-0">
+              <h3
+                id={`archive-${project.slug}-title`}
+                class="truncate font-display text-lg text-text md:text-xl"
+              >
+                {project.title}
+              </h3>
+              <p class="mt-1 font-mono text-[0.625rem] tracking-[0.12em] text-accent uppercase">
+                {project.kind} · {project.year}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              data-close-archive
+              aria-label={`Close ${project.title}`}
+              data-cursor-label="Close"
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-hairline text-muted transition-colors duration-300 hover:border-accent hover:text-accent"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path
+                  d="m4 4 8 8M12 4l-8 8"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </button>
+          </header>
+
+          {/*
+            The stage. min-h-0 is load-bearing: without it a flex child refuses
+            to shrink below its content size, the image pushes the dialog past
+            its own height, and you get the nested-scrollbar mess this replaced.
+          */}
+          <div class="relative min-h-0 flex-1 bg-surface-2" data-stage>
+            {project.images.map((image, index) => (
+              <Image
+                src={image}
+                alt={`${project.title}, image ${index + 1} of ${project.images.length}`}
+                widths={[800, 1200, 1600]}
+                sizes="(min-width: 1024px) 72rem, 94vw"
+                loading="lazy"
+                decoding="async"
+                data-slide={index}
+                class:list={[
+                  'absolute inset-0 h-full w-full object-contain p-5 transition-opacity duration-300 md:p-10',
+                  index === 0 ? 'opacity-100' : 'opacity-0',
+                ]}
+              />
+            ))}
+
+            {project.images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  data-gallery-prev
+                  aria-label="Previous image"
+                  class="absolute top-1/2 left-3 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-hairline bg-surface/90 text-muted backdrop-blur-sm transition-colors duration-300 hover:border-accent hover:text-accent md:left-5"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path
+                      d="M10 3 5 8l5 5"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+
+                <button
+                  type="button"
+                  data-gallery-next
+                  aria-label="Next image"
+                  class="absolute top-1/2 right-3 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-hairline bg-surface/90 text-muted backdrop-blur-sm transition-colors duration-300 hover:border-accent hover:text-accent md:right-5"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path
+                      d="m6 3 5 5-5 5"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+              </>
+            )}
+
+            {/* Announces slide changes to screen readers without stealing focus. */}
+            <p class="sr-only" aria-live="polite" data-gallery-status>
+              Image 1 of {project.images.length}
+            </p>
+          </div>
+
+          <footer class="flex items-center gap-4 border-t border-hairline px-5 py-3 md:px-7">
+            <span
+              class="shrink-0 font-mono text-[0.625rem] tracking-[0.12em] text-faint tabular-nums"
+              data-gallery-counter
+            >
+              01 / {String(project.images.length).padStart(2, '0')}
+            </span>
+
+            {project.images.length > 1 && (
+              <div class="flex min-w-0 flex-1 gap-2 overflow-x-auto py-1" data-gallery-thumbs>
+                {project.images.map((image, index) => (
+                  <button
+                    type="button"
+                    data-thumb={index}
+                    aria-label={`Show image ${index + 1}`}
+                    class="relative h-12 w-16 shrink-0 overflow-hidden rounded border border-hairline bg-surface-2 opacity-50 transition-all duration-300 hover:opacity-100 data-[active]:border-accent data-[active]:opacity-100"
+                  >
+                    <Image
+                      src={image}
+                      alt=""
+                      aria-hidden="true"
+                      widths={[160]}
+                      sizes="64px"
+                      loading="lazy"
+                      decoding="async"
+                      class="h-full w-full object-contain p-1"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </footer>
+        </div>
+      </dialog>
+    ))
+  }
+</section>
+
+<style>
+  /*
+    Written as plain CSS rather than utilities because the centring fix has to
+    beat Tailwind's preflight, which resets `margin: 0` on every element —
+    including <dialog>. That reset silently destroys the UA stylesheet's
+    `margin: auto`, which is the *only* thing centring a modal dialog, and the
+    result was a dialog pinned to the top-left corner.
+  */
+  .archive-dialog {
+    margin: auto;
+    width: min(76rem, 94vw);
+    height: min(86dvh, 52rem);
+    max-width: 94vw;
+    max-height: 86dvh;
+    padding: 0;
+    overflow: hidden; /* the stage handles its own sizing; nothing here scrolls */
+    border: 1px solid var(--color-hairline);
+    border-radius: 0.75rem;
+    background-color: var(--color-surface);
+    color: var(--color-text);
+  }
+
+  .archive-dialog::backdrop {
+    background-color: rgb(0 0 0 / 0.75);
+    backdrop-filter: blur(4px);
+  }
+
+  /* Thumbnail strip scrollbar, scaled down to suit a 12px-tall rail. */
+  [data-gallery-thumbs]::-webkit-scrollbar {
+    height: 4px;
+  }
+  [data-gallery-thumbs]::-webkit-scrollbar-thumb {
+    border: 0;
+    border-radius: 999px;
+    background: var(--color-hairline-strong);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .archive-dialog [data-slide] {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  import { ScrollTrigger, getLenis } from '@/lib/scroll';
+  import { initTilt, initHoverScrub } from '@/lib/interactions';
+
+  /* ---------------------------------------------------------------------------
+     Gallery lightbox
+     --------------------------------------------------------------------------- */
+
+  let lastTrigger: HTMLElement | null = null;
+
+  const show = (dialog: HTMLDialogElement, rawIndex: number) => {
+    const slides = [...dialog.querySelectorAll<HTMLElement>('[data-slide]')];
+    if (!slides.length) return;
+
+    // Wrap in both directions so next past the end returns to the start.
+    const index = (rawIndex + slides.length) % slides.length;
+
+    slides.forEach((slide, i) => {
+      slide.classList.toggle('opacity-100', i === index);
+      slide.classList.toggle('opacity-0', i !== index);
+    });
+
+    dialog.querySelectorAll<HTMLElement>('[data-thumb]').forEach((thumb, i) => {
+      thumb.toggleAttribute('data-active', i === index);
+      if (i === index) thumb.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    });
+
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const counter = dialog.querySelector<HTMLElement>('[data-gallery-counter]');
+    if (counter) counter.textContent = `${pad(index + 1)} / ${pad(slides.length)}`;
+
+    const status = dialog.querySelector<HTMLElement>('[data-gallery-status]');
+    if (status) status.textContent = `Image ${index + 1} of ${slides.length}`;
+
+    dialog.dataset.index = String(index);
+  };
+
+  const step = (dialog: HTMLDialogElement, delta: number) => {
+    show(dialog, Number(dialog.dataset.index ?? 0) + delta);
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-open-archive]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const slug = button.getAttribute('data-open-archive');
+      const dialog = document.getElementById(`archive-${slug}`) as HTMLDialogElement | null;
+      if (!dialog) return;
+
+      lastTrigger = button;
+      show(dialog, 0);
+      dialog.showModal();
+
+      // Lenis would otherwise keep driving the page underneath the modal.
+      getLenis()?.stop();
+
+      /*
+        Hand the cursor back to the OS.
+
+        A modal <dialog> renders in the top layer, above every z-index, so the
+        custom cursor element ends up *behind* it while `cursor: none` is still
+        applied to the page — leaving no visible cursor at all over the modal.
+      */
+      document.documentElement.classList.remove('has-custom-cursor');
+    });
+  });
+
+  document.querySelectorAll<HTMLDialogElement>('[data-gallery]').forEach((dialog) => {
+    dialog
+      .querySelector<HTMLElement>('[data-close-archive]')
+      ?.addEventListener('click', () => dialog.close());
+
+    dialog
+      .querySelector<HTMLElement>('[data-gallery-prev]')
+      ?.addEventListener('click', () => step(dialog, -1));
+
+    dialog
+      .querySelector<HTMLElement>('[data-gallery-next]')
+      ?.addEventListener('click', () => step(dialog, 1));
+
+    dialog.querySelectorAll<HTMLElement>('[data-thumb]').forEach((thumb, i) => {
+      thumb.addEventListener('click', () => show(dialog, i));
+    });
+
+    dialog.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        step(dialog, 1);
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        step(dialog, -1);
+      }
+      // Esc is handled natively by <dialog> and fires the close event below.
+    });
+
+    /*
+      Backdrop click closes.
+
+      Three guards, and the middle one is not optional. Activating a button with
+      Enter or Space fires a click whose clientX/clientY are both 0 — which sits
+      outside the dialog rect and read as a backdrop hit. A keyboard user
+      pressing Enter on "next" closed the gallery instead of advancing it.
+
+        event.target !== dialog  → the click landed on content, not the backdrop
+        event.detail === 0       → synthesised (keyboard/script), not a pointer
+        rect test                → confirms a real pointer landed outside
+    */
+    dialog.addEventListener('click', (event) => {
+      if (event.target !== dialog) return;
+      if (event.detail === 0) return;
+
+      const rect = dialog.getBoundingClientRect();
+      if (
+        event.clientX < rect.left ||
+        event.clientX > rect.right ||
+        event.clientY < rect.top ||
+        event.clientY > rect.bottom
+      ) {
+        dialog.close();
+      }
+    });
+
+    // Fires for the close button, backdrop click and Esc alike, so cleanup
+    // lives here once rather than at each call site.
+    dialog.addEventListener('close', () => {
+      getLenis()?.start();
+
+      const fine = matchMedia('(pointer: fine)').matches;
+      const still = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (fine && still) document.documentElement.classList.add('has-custom-cursor');
+
+      // Return focus to the card that opened it, or the visitor is dumped at
+      // the top of the document with no idea where they were.
+      lastTrigger?.focus({ preventScroll: true });
+      lastTrigger = null;
+    });
+  });
+
+  /* ---------------------------------------------------------------------------
+     Archive disclosure
+     --------------------------------------------------------------------------- */
+
+  const details = document.querySelector<HTMLDetailsElement>('[data-archive]');
+  let bound = false;
+
+  details?.addEventListener('toggle', () => {
+    if (!details.open) return;
+
+    // Cards only exist in layout once the <details> opens, so their pointer
+    // handlers are bound here rather than at page load — but only once, or
+    // every open/close cycle would stack another set of listeners on each card.
+    if (!bound) {
+      bound = true;
+      initTilt();
+      initHoverScrub();
+    }
+
+    // Opening adds a lot of page height; every trigger below this point needs
+    // its start/end recomputed or the rail and reveals drift out of sync.
+    ScrollTrigger.refresh();
+  });
+</script>

@@ -1,0 +1,188 @@
+---
+import { site } from '@/config/site';
+import HeroBackdrop from './HeroBackdrop.astro';
+---
+
+<section id="hero" class="relative isolate min-h-svh overflow-hidden">
+  <HeroBackdrop />
+
+  <div class="shell relative flex min-h-svh flex-col justify-between pt-28 pb-12 md:pt-32">
+    <!-- Availability -->
+    <div class="flex items-center gap-2.5" data-hero-line>
+      <span class="relative flex h-1.5 w-1.5">
+        <span
+          class="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-70"
+        ></span>
+        <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent"></span>
+      </span>
+      <span class="eyebrow">Open to AI data & tooling work</span>
+    </div>
+
+    <!-- Name + positioning -->
+    <div class="max-w-6xl">
+      <h1
+        class="font-display text-d1 text-text"
+        data-hero-title
+        aria-label={site.name}
+      >
+        {site.name}
+      </h1>
+
+      <div class="mt-8 max-w-3xl md:mt-10">
+        <p class="font-display text-d3 text-text/90" data-hero-line>
+          {site.role.primary.title} at <em class="text-accent not-italic"
+            >{site.role.primary.company}</em
+          >.<br />
+          {site.role.secondary.title} at <em class="text-accent not-italic"
+            >{site.role.secondary.company}</em
+          >.
+        </p>
+
+        <p class="mt-6 max-w-xl text-base leading-relaxed text-muted" data-hero-line>
+          I build the audit, QA and fraud-detection tooling behind large-scale AI
+          training data pipelines — and manage the people who run them.
+        </p>
+      </div>
+    </div>
+
+    <!-- Meta + actions -->
+    <div
+      class="flex flex-col gap-8 border-t border-hairline pt-8 md:flex-row md:items-end md:justify-between"
+      data-hero-line
+    >
+      <dl class="grid grid-cols-2 gap-x-10 gap-y-4 sm:grid-cols-3">
+        <div>
+          <dt class="eyebrow">Based</dt>
+          <dd class="mt-1.5 text-sm text-text">{site.location}</dd>
+        </div>
+        <div>
+          <dt class="eyebrow">Working</dt>
+          <dd class="mt-1.5 text-sm text-text">{site.locationNote}</dd>
+        </div>
+        <div class="col-span-2 sm:col-span-1">
+          <dt class="eyebrow">Focus</dt>
+          <dd class="mt-1.5 text-sm text-text">Human data · QA · Internal tooling</dd>
+        </div>
+      </dl>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <a
+          href={site.booking}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-magnetic="0.28"
+          data-cursor-label="Book"
+          class="group relative inline-flex items-center gap-2.5 rounded-full bg-accent-solid px-6 py-3.5 font-mono text-xs font-medium tracking-[0.1em] text-on-accent uppercase transition-colors duration-300 hover:bg-text hover:text-bg"
+        >
+          <span data-magnetic-inner class="inline-flex items-center gap-2.5">
+            Book a call
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              aria-hidden="true"
+              class="transition-transform duration-300 group-hover:translate-x-0.5"
+            >
+              <path
+                d="M1 6h10M7 2l4 4-4 4"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"></path>
+            </svg>
+          </span>
+        </a>
+
+        <a
+          href={`mailto:${site.email}`}
+          data-cursor-label="Email"
+          class="inline-flex items-center rounded-full border border-hairline-strong px-6 py-3.5 font-mono text-xs font-medium tracking-[0.1em] text-text uppercase transition-colors duration-300 hover:border-accent hover:text-accent"
+        >
+          {site.email}
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scroll cue -->
+  <div
+    class="pointer-events-none absolute bottom-6 left-1/2 hidden -translate-x-1/2 lg:block"
+    aria-hidden="true"
+  >
+    <div class="h-10 w-px overflow-hidden bg-hairline-strong">
+      <div class="h-1/2 w-full bg-accent" data-scroll-cue></div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap } from '@/lib/scroll';
+  import { prefersReducedMotion } from '@/lib/reduced-motion';
+
+  const title = document.querySelector<HTMLElement>('[data-hero-title]');
+  const lines = document.querySelectorAll<HTMLElement>('[data-hero-line]');
+  const cue = document.querySelector<HTMLElement>('[data-scroll-cue]');
+
+  if (prefersReducedMotion()) {
+    // Nothing to do — markup is already in its final, readable state.
+  } else {
+    // Split the name into characters. Done here rather than in the template so
+    // the served HTML keeps a single clean text node for copy/paste and AT,
+    // with aria-label on the h1 covering the split result.
+    if (title) {
+      const text = title.textContent ?? '';
+      title.textContent = '';
+      title.setAttribute('aria-hidden', 'false');
+
+      for (const char of text) {
+        const wrap = document.createElement('span');
+        wrap.className = 'line-mask';
+        wrap.style.display = 'inline-block';
+        wrap.setAttribute('aria-hidden', 'true');
+
+        const inner = document.createElement('span');
+        inner.style.display = 'inline-block';
+        inner.textContent = char === ' ' ? ' ' : char;
+
+        wrap.appendChild(inner);
+        title.appendChild(wrap);
+      }
+    }
+
+    const chars = title?.querySelectorAll('.line-mask > span') ?? [];
+    gsap.set(chars, { yPercent: 120 });
+    gsap.set(lines, { autoAlpha: 0, y: 24 });
+    if (cue) gsap.set(cue, { yPercent: -100 });
+
+    let played = false;
+    const play = () => {
+      // Both the preloader event and the safety timeout call this; whichever
+      // arrives first wins and the other becomes a no-op.
+      if (played) return;
+      played = true;
+
+      const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
+
+      tl.to(chars, { yPercent: 0, duration: 1.2, stagger: 0.035 })
+        .to(lines, { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.09 }, '-=0.75')
+        .to(cue, { yPercent: 0, duration: 0.6 }, '-=0.4');
+
+      if (cue) {
+        gsap.to(cue, {
+          yPercent: 100,
+          duration: 1.6,
+          ease: 'power2.inOut',
+          repeat: -1,
+          delay: 2,
+        });
+      }
+    };
+
+    // Prefer the preloader's cue so the two don't overlap, but never depend on
+    // it. The preloader has its own 4s backstop; this one sits just past it so a
+    // failed preload can't leave the hero stuck invisible.
+    document.addEventListener('preloader:done', play, { once: true });
+    window.setTimeout(play, 4500);
+  }
+</script>

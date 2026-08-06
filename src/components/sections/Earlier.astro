@@ -1,0 +1,39 @@
+---
+import { getCollection } from 'astro:content';
+import SectionHeader from '@/components/ui/SectionHeader.astro';
+
+const roles = (await getCollection('earlier')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<section id="earlier" class="shell scroll-mt-24 py-24 md:py-32">
+  <SectionHeader
+    index="06"
+    label="Earlier"
+    title="Before the pipeline."
+    lede="Media, brand and IT work in Nakuru. Different domain, same habit of taking ownership of the whole thing."
+  />
+
+  <ol class="mt-16 border-t border-hairline md:mt-20">
+    {
+      roles.map((entry) => (
+        <li
+          class="group grid gap-2 border-b border-hairline py-7 transition-colors duration-300 md:grid-cols-12 md:items-baseline md:gap-6"
+          data-reveal-fade
+        >
+          <span class="font-mono text-[0.6875rem] tracking-[0.12em] text-faint uppercase md:col-span-3">
+            {entry.data.period}
+          </span>
+
+          <div class="md:col-span-4">
+            <h3 class="text-base text-text">{entry.data.company}</h3>
+            <p class="mt-1 text-sm text-accent">{entry.data.role}</p>
+          </div>
+
+          <p class="text-sm leading-relaxed text-muted md:col-span-5">
+            {entry.data.summary}
+          </p>
+        </li>
+      ))
+    }
+  </ol>
+</section>

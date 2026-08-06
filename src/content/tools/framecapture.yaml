@@ -1,0 +1,6 @@
+order: 1
+name: FrameCapture
+kind: Internal desktop audit tool
+problem: Submission integrity across a large-scale annotation pipeline had to be verified at a volume manual spot-checking could not cover.
+build: A desktop audit tool built on a multi-threaded browser-automation architecture, driving verification passes concurrently rather than serially.
+effect: Verifies submission integrity across the annotation pipeline.

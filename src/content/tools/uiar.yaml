@@ -1,0 +1,6 @@
+order: 2
+name: UIAR
+kind: UI augmentation layer
+problem: Internal project boards carried no task-tracking identifiers, leaving reviewers and leads without a reliable way to follow work through the pipeline.
+build: An augmentation layer that injects task-tracking identifiers directly into the existing boards, rather than asking the team to adopt a parallel system.
+effect: Improved pipeline visibility for reviewers and leads.

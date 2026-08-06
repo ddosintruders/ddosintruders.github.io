@@ -1,0 +1,6 @@
+order: 5
+name: Pipeline activity reporting
+kind: Automated reporting & scoring
+problem: Team and pipeline performance had to be tracked continuously, without a standing manual collation cost every reporting cycle.
+build: An automated activity-reporting system with quality scoring and self-refreshing visualizations.
+effect: Tracks team and pipeline performance on a live basis.

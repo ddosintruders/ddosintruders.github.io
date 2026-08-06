@@ -1,0 +1,86 @@
+---
+const items = [
+  'Python',
+  'Google Apps Script',
+  'Chrome Extensions',
+  'QML & Qt',
+  'MediaPipe',
+  'LiDAR Data',
+  'Quality Assurance',
+  'Fraud Detection',
+  'Pipeline Operations',
+  'KPI Reporting',
+];
+---
+
+<section
+  class="relative overflow-hidden border-y border-hairline py-6"
+  aria-label="Technologies and disciplines"
+>
+  <div class="flex w-max" data-marquee>
+    {
+      /* Two identical tracks. The transform wraps at exactly one track width,
+         so the seam is never visible and there is no reflow at the loop point. */
+      [0, 1].map((copy) => (
+        <ul class="flex shrink-0 items-center" aria-hidden={copy === 1 ? 'true' : undefined}>
+          {items.map((item) => (
+            <li class="flex items-center gap-8 px-8">
+              <span class="font-display text-xl whitespace-nowrap text-muted">{item}</span>
+              <span class="h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+            </li>
+          ))}
+        </ul>
+      ))
+    }
+  </div>
+</section>
+
+<script>
+  import { prefersReducedMotion } from '@/lib/reduced-motion';
+
+  const track = document.querySelector<HTMLElement>('[data-marquee]');
+
+  if (track && !prefersReducedMotion()) {
+    const first = track.firstElementChild as HTMLElement | null;
+
+    let offset = 0;
+    let velocity = 0;
+    let lastScroll = window.scrollY;
+    let raf = 0;
+
+    window.addEventListener(
+      'scroll',
+      () => {
+        const delta = window.scrollY - lastScroll;
+        lastScroll = window.scrollY;
+        // Scroll momentum feeds the marquee, so the page feels physically
+        // connected rather than having a decoration ticking away beside it.
+        velocity += delta * 0.35;
+      },
+      { passive: true },
+    );
+
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      if (!first) return;
+
+      const width = first.offsetWidth;
+      if (!width) return;
+
+      velocity *= 0.92; // decay back to the base drift
+      offset -= 0.45 + velocity;
+
+      // Wrap in both directions — fast upward scroll can push offset positive.
+      if (offset <= -width) offset += width;
+      if (offset > 0) offset -= width;
+
+      track.style.transform = `translate3d(${offset}px, 0, 0)`;
+    };
+
+    raf = requestAnimationFrame(tick);
+
+    document.addEventListener('astro:before-swap', () => cancelAnimationFrame(raf), {
+      once: true,
+    });
+  }
+</script>

@@ -1,0 +1,377 @@
+@import "tailwindcss";
+
+@import "@fontsource-variable/space-grotesk";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+/* ---------------------------------------------------------------------------
+   Design tokens — the single source of truth.
+   No hardcoded hex anywhere else in the codebase.
+   --------------------------------------------------------------------------- */
+/*
+   THEMING
+   -------
+   @theme carries the LIGHT palette, because Tailwind needs concrete values here
+   to generate utilities. Dark is applied further down by overriding the same
+   custom properties — utilities compile to `var(--color-…)`, so re-pointing the
+   variable re-themes every utility at once.
+
+   The accent had to split into two tokens. Acid lime (#c8f751) is the brand
+   colour and clears AAA on near-black, but as *text* on a white background it
+   measures about 1.4:1 — unreadable. So:
+
+     --color-accent        theme-aware. Lime on dark, deep olive on light.
+                           Used for text, borders, ticks, small dots.
+     --color-accent-solid  constant lime. Used only as a filled background.
+     --color-on-accent     constant near-black. The text that sits on that fill.
+
+   That keeps the brand colour present in both themes (the CTA button is lime
+   either way) without ever asking lime to carry contrast it cannot carry.
+*/
+@theme {
+  --color-bg: #fbfbfa;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f1ef;
+  --color-hairline: rgb(0 0 0 / 0.09);
+  --color-hairline-strong: rgb(0 0 0 / 0.17);
+  --color-text: #14161a;
+  /* 6.4:1 on light --color-bg */
+  --color-muted: #555d68;
+  /* 5.0:1 on light --color-bg */
+  --color-faint: #676e79;
+  /* 5.3:1 on light --color-bg */
+  --color-accent: #56731a;
+  --color-accent-dim: rgb(86 115 26 / 0.10);
+  --color-accent-glow: rgb(86 115 26 / 0.30);
+
+  /* Constant across themes — the filled-button pair. */
+  --color-accent-solid: #c8f751;
+  --color-on-accent: #08090b;
+
+  /* Hero dot-matrix fallback colour, flipped per theme. */
+  --backdrop-dot: rgb(0 0 0 / 0.13);
+
+  /* Type */
+  --font-display: "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, "SF Mono", monospace;
+
+  /* Fluid display scale */
+  --text-d1: clamp(2.75rem, 1.2rem + 7.2vw, 8rem);
+  --text-d1--line-height: 0.92;
+  --text-d1--letter-spacing: -0.04em;
+
+  --text-d2: clamp(2rem, 1rem + 4.2vw, 4.5rem);
+  --text-d2--line-height: 0.98;
+  --text-d2--letter-spacing: -0.03em;
+
+  --text-d3: clamp(1.5rem, 1rem + 2.2vw, 2.75rem);
+  --text-d3--line-height: 1.08;
+  --text-d3--letter-spacing: -0.02em;
+
+  /* Motion */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-quint: cubic-bezier(0.83, 0, 0.17, 1);
+
+  /* Layout */
+  --spacing-gutter: clamp(1.25rem, 4vw, 5rem);
+}
+
+/* ---------------------------------------------------------------------------
+   Dark palette.
+   The original design: acid lime on near-black, one accent, used sparingly.
+
+   Applied two ways, and the order matters:
+     1. the media query handles a visitor with JS disabled or before the
+        no-FOUC script runs;
+     2. the attribute selector handles an explicit choice and must win, so it
+        comes last and the media query excludes [data-theme="light"].
+   --------------------------------------------------------------------------- */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #08090b;
+    --color-surface: #101215;
+    --color-surface-2: #181b1f;
+    --color-hairline: rgb(255 255 255 / 0.07);
+    --color-hairline-strong: rgb(255 255 255 / 0.14);
+    --color-text: #f2f3f5;
+    --color-muted: #878e98;
+    --color-faint: #7b828d;
+    --color-accent: #c8f751;
+    --color-accent-dim: rgb(200 247 81 / 0.12);
+    --color-accent-glow: rgb(200 247 81 / 0.35);
+    --backdrop-dot: rgb(255 255 255 / 0.09);
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #08090b;
+  --color-surface: #101215;
+  --color-surface-2: #181b1f;
+  --color-hairline: rgb(255 255 255 / 0.07);
+  --color-hairline-strong: rgb(255 255 255 / 0.14);
+  --color-text: #f2f3f5;
+  /* 6.0:1 on dark --color-bg */
+  --color-muted: #878e98;
+  /* 5.1:1 on dark --color-bg, 4.8:1 on --color-surface. Was #5a616b, which
+     measured 3.19:1 and failed AA on the 11px mono labels it is used for. */
+  --color-faint: #7b828d;
+  --color-accent: #c8f751;
+  --color-accent-dim: rgb(200 247 81 / 0.12);
+  --color-accent-glow: rgb(200 247 81 / 0.35);
+  --backdrop-dot: rgb(255 255 255 / 0.09);
+}
+
+/* Native form controls, scrollbars and the like follow the active theme.
+   The grain and vignette need per-theme treatment too: an `overlay` blend that
+   reads as film grain on near-black turns into harsh speckle on near-white, and
+   a black vignette on a light page just looks like a printing error. */
+:root {
+  color-scheme: light;
+  --grain-opacity: 0.05;
+  --grain-blend: multiply;
+  --vignette-color: rgb(0 0 0 / 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --grain-opacity: 0.16;
+    --grain-blend: overlay;
+    --vignette-color: rgb(0 0 0 / 0.55);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --grain-opacity: 0.16;
+  --grain-blend: overlay;
+  --vignette-color: rgb(0 0 0 / 0.55);
+}
+
+/* Theme changes should read as a deliberate transition, not a flash — but only
+   when the user toggles. `data-theme-ready` is set by the no-FOUC script one
+   frame after boot, so the initial paint is never animated. */
+:root[data-theme-ready] body,
+:root[data-theme-ready] body * {
+  transition:
+    background-color 320ms var(--ease-out-expo),
+    border-color 320ms var(--ease-out-expo),
+    color 320ms var(--ease-out-expo);
+}
+
+/* …except for anything already running its own choreography, which a blanket
+   colour transition would visibly fight. */
+:root[data-theme-ready] [data-reveal] *,
+:root[data-theme-ready] [data-scramble],
+:root[data-theme-ready] #cursor,
+:root[data-theme-ready] #cursor * {
+  transition: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+   --------------------------------------------------------------------------- */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    /* Lenis drives scrolling; native smooth-scroll would fight it. */
+    scroll-behavior: auto;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Guards against any single element blowing out the horizontal axis. */
+    overflow-x: clip;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  /* Focus is never removed — only restyled. Accent ring reads clearly on every
+     surface in the palette. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Firefox / fallback scrollbar. */
+  html {
+    scrollbar-color: var(--color-surface-2) var(--color-bg);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-bg);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-surface-2);
+    border-radius: 999px;
+    border: 2px solid var(--color-bg);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-faint);
+  }
+
+  img,
+  video,
+  canvas,
+  svg {
+    display: block;
+    max-width: 100%;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Utilities
+   --------------------------------------------------------------------------- */
+@utility grain {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  mix-blend-mode: var(--grain-blend);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@utility vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    transparent 40%,
+    var(--vignette-color) 100%
+  );
+}
+
+/* Section index label — mono, uppercase, tracked out. */
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+@utility hairline-t {
+  border-top: 1px solid var(--color-hairline);
+}
+
+@utility shell {
+  width: 100%;
+  max-width: 88rem;
+  margin-inline: auto;
+  padding-inline: var(--spacing-gutter);
+}
+
+/* Text that reveals per-line behind a clip mask. The wrapper hides overflow;
+   GSAP translates the inner span up into place. */
+@utility line-mask {
+  display: block;
+  overflow: hidden;
+}
+
+/* Pointer-tracked border glow. JS only writes --mx/--my/--spot (see
+   lib/interactions.ts); the drawing lives here. The mask-composite trick paints
+   the gradient into a 1px ring so only the border lights up, not the fill. */
+@utility spotlight-card {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    padding: 1px;
+    background: radial-gradient(
+      16rem circle at var(--mx, 50%) var(--my, 50%),
+      var(--color-accent-glow),
+      transparent 65%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    opacity: var(--spot, 0);
+    transition: opacity 320ms ease;
+    pointer-events: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Reduced motion — the global backstop.
+   Individual components ALSO branch on the shared usePrefersReducedMotion hook
+   so JS-driven timelines never start. This rule catches CSS transitions and any
+   animation a component forgets to guard.
+   --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .grain {
+    display: none;
+  }
+}
+
+/* Hide the native cursor only where the custom one actually runs: fine pointers
+   that also allow motion. Coarse pointers and reduced-motion users keep theirs. */
+@media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  html.has-custom-cursor,
+  html.has-custom-cursor a,
+  html.has-custom-cursor button,
+  html.has-custom-cursor [role="button"] {
+    cursor: none;
+  }
+}

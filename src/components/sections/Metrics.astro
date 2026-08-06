@@ -1,0 +1,63 @@
+---
+import { metrics } from '@/data/metrics';
+---
+
+<section id="metrics" class="shell scroll-mt-24 py-24 md:py-32">
+  <div class="grid grid-cols-2 gap-x-6 gap-y-12 border-t border-hairline pt-12 lg:grid-cols-4">
+    {
+      metrics.map((metric) => (
+        <div data-reveal-fade>
+          <div class="flex items-baseline font-display text-d2 tabular-nums text-text">
+            {metric.prefix && <span>{metric.prefix}</span>}
+            <span data-counter={metric.value}>0</span>
+            {metric.suffix && <span class="text-accent">{metric.suffix}</span>}
+          </div>
+          <p class="mt-3 text-sm leading-snug text-text">{metric.label}</p>
+          <p class="mt-1.5 font-mono text-[0.6875rem] tracking-wide text-faint">
+            {metric.source}
+          </p>
+        </div>
+      ))
+    }
+  </div>
+</section>
+
+<script>
+  import { gsap, ScrollTrigger } from '@/lib/scroll';
+  import { prefersReducedMotion } from '@/lib/reduced-motion';
+
+  const counters = document.querySelectorAll<HTMLElement>('[data-counter]');
+
+  counters.forEach((el) => {
+    const target = Number(el.dataset.counter ?? 0);
+
+    if (prefersReducedMotion()) {
+      // Show the real figure immediately. A counter stuck at 0 would be a
+      // factual error on the page, not just a missing animation.
+      el.textContent = String(target);
+      return;
+    }
+
+    // IntersectionObserver-backed via ScrollTrigger, replacing the old site's
+    // scroll-handler version that could miss the section entirely on fast scroll.
+    ScrollTrigger.create({
+      trigger: el,
+      start: 'top 88%',
+      once: true,
+      onEnter: () => {
+        const proxy = { value: 0 };
+        gsap.to(proxy, {
+          value: target,
+          duration: 1.8,
+          ease: 'power2.out',
+          onUpdate: () => {
+            el.textContent = String(Math.round(proxy.value));
+          },
+          onComplete: () => {
+            el.textContent = String(target);
+          },
+        });
+      },
+    });
+  });
+</script>

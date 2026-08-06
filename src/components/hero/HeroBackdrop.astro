@@ -1,0 +1,241 @@
+---
+/**
+ * Hero backdrop: a dot matrix that pushes away from the pointer and lights up
+ * as it does.
+ *
+ * The static CSS grid below is the no-JS / reduced-motion / no-WebGL state and
+ * is always present; the canvas is layered over it only when the shader
+ * actually starts. Kept deliberately faint — it sits directly behind the hero
+ * paragraph and must never compete with it for legibility.
+ */
+---
+
+<div id="hero-backdrop" aria-hidden="true" class="absolute inset-0 -z-10">
+  <div class="absolute inset-0" data-backdrop-fallback></div>
+</div>
+
+<style>
+  [data-backdrop-fallback] {
+    /* --backdrop-dot flips from white-on-dark to black-on-light in theme.css. */
+    background-image: radial-gradient(circle, var(--backdrop-dot) 1px, transparent 1px);
+    background-size: 26px 26px;
+    mask-image: radial-gradient(ellipse 80% 60% at 70% 45%, black 10%, transparent 70%);
+  }
+
+  /* Once the shader is running the static grid would double up on it. */
+  #hero-backdrop.is-live [data-backdrop-fallback] {
+    display: none;
+  }
+</style>
+
+<script>
+  import { Mesh, Program, Renderer, Triangle, Vec2 } from 'ogl';
+  import { hasFinePointer, prefersReducedMotion } from '@/lib/reduced-motion';
+
+  const vertex = /* glsl */ `
+    attribute vec2 uv;
+    attribute vec2 position;
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = vec4(position, 0.0, 1.0);
+    }
+  `;
+
+  /**
+   * A single fullscreen triangle with no per-particle state, so the whole field
+   * costs one draw call and holds 60fps on integrated graphics. The regular grid
+   * also reads as instrumentation, which is the note the rest of the page plays.
+   */
+  const fragment = /* glsl */ `
+    precision highp float;
+
+    uniform float uTime;
+    uniform vec2  uResolution;
+    uniform vec2  uMouse;
+    uniform float uIntro;
+    uniform vec3  uAccent;
+    uniform vec3  uBase;
+    uniform float uAlpha;
+
+    varying vec2 vUv;
+
+    float hash(vec2 p) {
+      return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+    }
+
+    void main() {
+      float aspect = min(uResolution.x, uResolution.y);
+      vec2 st = vUv * uResolution / aspect;
+      vec2 mouse = uMouse * uResolution / aspect;
+
+      float spacing = 0.034;
+      vec2 grid  = st / spacing;
+      vec2 cell  = floor(grid);
+      vec2 local = fract(grid) - 0.5;
+
+      vec2 cellCentre = (cell + 0.5) * spacing;
+      float dist = distance(cellCentre, mouse);
+
+      float influence = smoothstep(0.42, 0.0, dist);
+
+      vec2 dir = normalize(cellCentre - mouse + vec2(1e-5));
+      local -= dir * influence * 0.34;
+
+      float n = hash(cell);
+      float pulse = 0.5 + 0.5 * sin(uTime * 0.55 + n * 6.2831);
+
+      float radius = 0.05 + influence * 0.10 + pulse * 0.014;
+      float dotMask = smoothstep(radius, radius - 0.028, length(local));
+
+      float vig = smoothstep(1.15, 0.25, length(vUv - 0.5) * 1.7);
+      float wipe = smoothstep(0.0, 0.85, uIntro - length(vUv - 0.5) * 0.55);
+
+      vec3 col = mix(uBase, uAccent, influence * 0.9);
+
+      float alpha = dotMask * vig * wipe * (uAlpha + influence * 0.6 + pulse * 0.035);
+
+      gl_FragColor = vec4(col, alpha);
+    }
+  `;
+
+  const host = document.getElementById('hero-backdrop');
+
+  if (host && !prefersReducedMotion()) {
+    let renderer: Renderer | null = null;
+
+    try {
+      renderer = new Renderer({
+        dpr: Math.min(window.devicePixelRatio, 2),
+        alpha: true,
+        antialias: false,
+      });
+    } catch {
+      // No WebGL — the static CSS grid stays as-is.
+      renderer = null;
+    }
+
+    if (renderer) {
+      const gl = renderer.gl;
+      gl.clearColor(0, 0, 0, 0);
+      host.appendChild(gl.canvas);
+      gl.canvas.style.width = '100%';
+      gl.canvas.style.height = '100%';
+      gl.canvas.style.display = 'block';
+      host.classList.add('is-live');
+
+      /**
+       * Palettes, mirroring --color-accent per theme.
+       *
+       * On dark the dots are light grey lifting toward acid lime. On light they
+       * have to invert entirely — light-grey dots on near-white would be
+       * invisible — so they go near-black lifting toward the deep olive the
+       * light theme uses for its accent, at a slightly higher base alpha since
+       * dark-on-light reads fainter at the same value.
+       */
+      const PALETTES = {
+        dark: { base: [0.34, 0.36, 0.39], accent: [0.784, 0.969, 0.318], alpha: 0.1 },
+        light: { base: [0.08, 0.09, 0.11], accent: [0.337, 0.451, 0.102], alpha: 0.11 },
+      } as const;
+
+      const themeNow = () =>
+        document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+
+      const initial = PALETTES[themeNow()];
+
+      const program = new Program(gl, {
+        vertex,
+        fragment,
+        transparent: true,
+        uniforms: {
+          uTime: { value: 0 },
+          uResolution: { value: new Vec2(1, 1) },
+          uMouse: { value: new Vec2(0.5, 0.5) },
+          uIntro: { value: 0 },
+          uAccent: { value: [...initial.accent] },
+          uBase: { value: [...initial.base] },
+          uAlpha: { value: initial.alpha },
+        },
+      });
+
+      document.addEventListener('themechange', () => {
+        const next = PALETTES[themeNow()];
+        program.uniforms.uAccent.value = [...next.accent];
+        program.uniforms.uBase.value = [...next.base];
+        program.uniforms.uAlpha.value = next.alpha;
+      });
+
+      const mesh = new Mesh(gl, { geometry: new Triangle(gl), program });
+
+      const resize = () => {
+        const { clientWidth: w, clientHeight: h } = host;
+        renderer!.setSize(w, h);
+        program.uniforms.uResolution.value.set(w, h);
+      };
+      resize();
+      new ResizeObserver(resize).observe(host);
+
+      /**
+       * The pointer starts off-canvas, not at (0.5, 0.5).
+       *
+       * Centre is exactly where the headline sits, so defaulting there lit the
+       * grid brightest underneath the text on every page load — and on touch,
+       * where no pointer event ever arrives, it stayed that way permanently.
+       * Off-canvas drops `influence` to zero everywhere, leaving a flat quiet
+       * field until the visitor actually moves a mouse.
+       */
+      const target = new Vec2(-2, -2);
+      const current = new Vec2(-2, -2);
+      let pointerSeen = false;
+
+      if (hasFinePointer()) {
+        addEventListener(
+          'pointermove',
+          (event) => {
+            const rect = host.getBoundingClientRect();
+            target.set(
+              (event.clientX - rect.left) / rect.width,
+              1 - (event.clientY - rect.top) / rect.height,
+            );
+            // Jump to the first real position instead of lerping in from
+            // off-canvas, which would sweep a highlight across the hero.
+            if (!pointerSeen) {
+              pointerSeen = true;
+              current.set(target.x, target.y);
+            }
+          },
+          { passive: true },
+        );
+      }
+
+      // This canvas sits at the top of a long page; without a visibility gate it
+      // would burn a rAF loop for the entire scroll.
+      let onScreen = true;
+      new IntersectionObserver(
+        ([entry]) => {
+          onScreen = entry?.isIntersecting ?? false;
+        },
+        { threshold: 0 },
+      ).observe(host);
+
+      const start = performance.now();
+
+      const frame = (now: number) => {
+        requestAnimationFrame(frame);
+        if (!onScreen || document.hidden) return;
+
+        const elapsed = (now - start) / 1000;
+        current.x += (target.x - current.x) * 0.08;
+        current.y += (target.y - current.y) * 0.08;
+
+        program.uniforms.uTime.value = elapsed;
+        program.uniforms.uMouse.value.set(current.x, current.y);
+        program.uniforms.uIntro.value = Math.min(1, elapsed / 1.6);
+
+        renderer!.render({ scene: mesh });
+      };
+
+      requestAnimationFrame(frame);
+    }
+  }
+</script>

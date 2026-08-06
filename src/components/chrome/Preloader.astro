@@ -1,0 +1,111 @@
+---
+// Real-progress preloader. Counts actual image decode + font readiness rather
+// than animating a fake bar, then wipes away with a curtain.
+---
+
+<div
+  id="preloader"
+  aria-hidden="true"
+  class="fixed inset-0 z-[10001] flex items-end justify-between bg-bg px-(--spacing-gutter) pb-(--spacing-gutter) transition-opacity duration-500"
+>
+  <span class="eyebrow" data-preloader-name>Adnan Ahmed</span>
+  <span
+    class="font-display text-d2 tabular-nums text-text"
+    data-preloader-count>0</span
+  >
+
+  <!-- Progress hairline -->
+  <div class="absolute inset-x-0 bottom-0 h-px bg-hairline">
+    <div
+      class="h-full w-0 bg-accent transition-[width] duration-300 ease-out"
+      data-preloader-bar
+    >
+    </div>
+  </div>
+
+  <!-- Curtain: sits above the counter and wipes upward on completion. -->
+  <div
+    class="pointer-events-none absolute inset-0 origin-bottom bg-bg"
+    data-preloader-curtain
+    style="transform: scaleY(0);"
+  >
+  </div>
+</div>
+
+<script>
+  import { prefersReducedMotion } from '@/lib/reduced-motion';
+
+  const root = document.getElementById('preloader');
+  if (root) {
+    const countEl = root.querySelector<HTMLElement>('[data-preloader-count]');
+    const barEl = root.querySelector<HTMLElement>('[data-preloader-bar]');
+    const curtainEl = root.querySelector<HTMLElement>('[data-preloader-curtain]');
+    const reduced = prefersReducedMotion();
+
+    let settled = false;
+
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+
+      if (countEl) countEl.textContent = '100';
+      if (barEl) barEl.style.width = '100%';
+      document.documentElement.removeAttribute('data-loading');
+
+      if (reduced) {
+        root.remove();
+        return;
+      }
+
+      if (curtainEl) {
+        curtainEl.style.transition = 'transform 700ms cubic-bezier(0.83, 0, 0.17, 1)';
+        curtainEl.style.transformOrigin = 'top';
+      }
+
+      // Let the 100 land before wiping.
+      window.setTimeout(() => {
+        root.style.transition = 'transform 800ms cubic-bezier(0.83, 0, 0.17, 1)';
+        root.style.transform = 'translateY(-100%)';
+        window.setTimeout(() => root.remove(), 850);
+        // Signal the hero to start its entrance.
+        document.dispatchEvent(new CustomEvent('preloader:done'));
+      }, 260);
+    };
+
+    /**
+     * Progress is derived from things that actually load. `window.load` alone
+     * would sit at 0 then jump; this gives honest intermediate values.
+     */
+    const images = Array.from(document.images);
+    const total = images.length + 1; // +1 for fonts
+    let done = 0;
+
+    const bump = () => {
+      done += 1;
+      const pct = Math.min(99, Math.round((done / total) * 100));
+      if (countEl) countEl.textContent = String(pct);
+      if (barEl) barEl.style.width = `${pct}%`;
+    };
+
+    images.forEach((img) => {
+      if (img.complete) {
+        bump();
+      } else {
+        img.addEventListener('load', bump, { once: true });
+        img.addEventListener('error', bump, { once: true });
+      }
+    });
+
+    if (document.fonts) {
+      document.fonts.ready.then(bump).catch(bump);
+    } else {
+      bump();
+    }
+
+    window.addEventListener('load', finish, { once: true });
+
+    // Hard backstop. A hung third-party request must never leave a visitor
+    // staring at a black screen — content wins over choreography.
+    window.setTimeout(finish, 4000);
+  }
+</script>
