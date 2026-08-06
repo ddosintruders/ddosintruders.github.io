@@ -175,10 +175,37 @@ import SectionHeader from '@/components/ui/SectionHeader.astro';
       if (response.ok) {
         form.reset();
         if (status) status.textContent = 'Sent — I will get back to you.';
-      } else {
-        if (status) {
-          status.textContent = 'Something went wrong. Email me directly instead.';
-        }
+        return;
+      }
+
+      /*
+       * Formspree refuses AJAX submissions on forms that have reCAPTCHA
+       * enabled, answering 403 with "you need to set a custom key or reCAPTCHA
+       * must be disabled". It has no way to show a challenge to a fetch call.
+       *
+       * Rather than dead-ending the visitor, hand off to a native POST. They
+       * get bounced to Formspree's page to complete the CAPTCHA, which is
+       * exactly how the previous version of this site behaved — the message
+       * still arrives. Disabling reCAPTCHA in the Formspree dashboard restores
+       * the stay-on-page path automatically; no code change needed.
+       */
+      let payload: { error?: string } | null = null;
+      try {
+        payload = await response.json();
+      } catch {
+        payload = null;
+      }
+
+      if (response.status === 403 && /recaptcha|custom key/i.test(payload?.error ?? '')) {
+        if (status) status.textContent = 'Opening secure form…';
+        // Prototype call, not form.submit(): a field named "submit" would
+        // shadow the method. Bypasses this listener, so it cannot recurse.
+        HTMLFormElement.prototype.submit.call(form);
+        return;
+      }
+
+      if (status) {
+        status.textContent = 'Something went wrong. Email me directly instead.';
       }
     } catch {
       if (status) status.textContent = 'Network error. Email me directly instead.';

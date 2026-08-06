@@ -50,12 +50,26 @@ export default defineConfig({
         "img-src 'self' data:",
         "font-src 'self'",
         // Formspree receives the contact form, both as a native POST and via
-        // the progressive-enhancement fetch.
-        "connect-src 'self' https://formspree.io",
+        // the progressive-enhancement fetch. form-action is what allows the
+        // reCAPTCHA fallback in Contact.astro to navigate there.
+        "connect-src 'self' https://formspree.io https://cloudflareinsights.com",
         "form-action 'self' https://formspree.io",
         "base-uri 'self'",
         "object-src 'none'",
       ],
+      scriptDirective: {
+        /*
+         * Cloudflare Pages injects its Web Analytics beacon
+         * (static.cloudflareinsights.com/beacon.min.js) into the HTML response
+         * itself, after the build — so Astro never sees it and cannot hash it.
+         * Without this entry the browser blocks it on every page load and
+         * analytics silently records nothing.
+         *
+         * Remove this and the cloudflareinsights.com entry in connect-src above
+         * if Web Analytics is ever turned off for the project.
+         */
+        resources: ["'self'", 'https://static.cloudflareinsights.com'],
+      },
       styleDirective: {
         /**
          * 'unsafe-inline' is scoped to `style-src-attr`, not to `style-src`.
@@ -69,9 +83,6 @@ export default defineConfig({
          * stylesheets while letting those attributes through.
          */
         resources: ["'self'", { resource: "'unsafe-inline'", kind: 'attribute' }],
-      },
-      scriptDirective: {
-        resources: ["'self'"],
       },
     },
   },
