@@ -1,7 +1,22 @@
-# Deploying to Cloudflare Pages
+# Deploying
 
-Nothing here has been deployed, committed, or pushed. No git repo was initialised
-and no Cloudflare project was created — that is all yours to do when you're ready.
+The source lives in `ddosintruders/ddosintruders.github.io`. Two things build
+from it independently: Cloudflare Pages, and GitHub Pages via
+`.github/workflows/deploy-pages.yml`.
+
+## Node version — read this first
+
+**Astro 7 declares `engines.node: ">=22.12.0"`.** Anything lower fails the build
+outright, and the error is not always obvious in CI logs. Both build
+environments must be set explicitly:
+
+| Where | Setting |
+|---|---|
+| Cloudflare Pages | environment variable `NODE_VERSION` = `22.12.0` |
+| GitHub Actions | `node-version: 22` in `deploy-pages.yml` |
+
+Verify the current requirement with `npm view astro engines` before changing
+either. Built and tested locally on Node 24.18.
 
 ## Cloudflare Pages settings
 
@@ -10,10 +25,28 @@ and no Cloudflare project was created — that is all yours to do when you're re
 | Framework preset | Astro |
 | Build command | `npm run build` |
 | Build output directory | `dist` |
-| Node version | 20 or newer (built and tested on 24.18) |
+| Root directory | *(blank)* |
+| `NODE_VERSION` | `22.12.0` |
 
-Set `NODE_VERSION` to `20` in the Pages environment variables if the default
-image is older.
+If the project predates this rebuild it may still be configured as a plain
+static site with **no build command** and the output set to the repo root. That
+serves the repository verbatim — and since `index.html` is generated into
+`dist/` (which is gitignored), the result is a 404 on every path. Update all
+four rows above.
+
+## GitHub Pages
+
+This is a `<user>.github.io` repo, so Pages defaults to *Deploy from a branch*,
+which runs Jekyll over the repo root. Jekyll reads a leading `---` as YAML front
+matter and every `.astro` file opens with one, so it fails on the first
+component it touches.
+
+**Settings → Pages → Source must be set to "GitHub Actions".** Adding the
+workflow file alone does nothing while the source is still a branch — both
+pipelines run and the Jekyll one keeps failing.
+
+`.nojekyll` does not help here: it stops Jekyll but then Pages serves the repo
+root, which has no `index.html`.
 
 ## Local commands
 
